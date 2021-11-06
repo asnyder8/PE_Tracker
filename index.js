@@ -13,32 +13,32 @@ const pool = new Pool({
 express()
     .use(express.static(path.join(__dirname, 'public')))
     .use(express.json())
-    .use(express.urlencoded({extended: true}))
+    .use(express.urlencoded({ extended: true }))
     .set('views', path.join(__dirname, 'views'))
     .set('view engine', 'ejs')
-    .get('/', async(req, res) => {
+    .get('/', async (req, res) => {
         try {
-        const client = await pool.connect();
+            const client = await pool.connect();
 
-        const tasks = await client.query(`SELECT * FROM tasks ORDER BY id ASC`);
+            const tasks = await client.query(`SELECT * FROM tasks ORDER BY id ASC`);
 
-        const locals = {
-            'tasks': (tasks) ? tasks.rows : null
-        };
-        res.render('pages/index', locals);
+            const locals = {
+                'tasks': (tasks) ? tasks.rows : null
+            };
+            res.render('pages/index', locals);
 
-        client.release();
+            client.release();
         }
         catch (err) {
             console.error(err);
             res.send("Error " + err);
         }
     })
-    .get('/db-info', async(req, res) => {
+    .get('/db-info', async (req, res) => {
         try {
             const client = await pool.connect();
             const tables = await client.query(
-            `
+                `
             SELECT c.relname AS table, a.attname AS column, t.typname AS type
             FROM pg_catalog.pg_class AS c 
             LEFT JOIN pg_catalog.pg_attribute AS a 
@@ -55,7 +55,7 @@ express()
                 'tables': (tables) ? tables.rows : null,
                 'obs': (obs) ? obs.rows : null
             };
-            console.log(obs.rows[0]);
+            //console.log(obs.rows[0]);
 
             res.render('pages/db-info', locals);
             client.release();
@@ -64,7 +64,7 @@ express()
             res.send("Error: " + err);
         }
     })
-    .post('/log', async(req,res) => {
+    .post('/log', async (req, res) => {
         try {
             const client = await pool.connect();
 
@@ -74,19 +74,19 @@ express()
             const duration = req.body.duration;
 
             const sqlInsert = await client.query(
-`INSERT INTO observations (users_id, students_id, tasks_id, duration)
-VALUES (${usersId}, ${studentsId}, ${tasksId}, ${duration})
-RETURNING id as new_id;`);
-                console.log(`Tracking task ${tasksId}`);
+                `INSERT INTO observations (users_id, students_id, tasks_id, duration)
+            VALUES (${usersId}, ${studentsId}, ${tasksId}, ${duration})
+            RETURNING id as new_id;`);
+            console.log(`Tracking task ${tasksId}`);
 
-                const result = {
-                    'response' : (sqlInsert) ? (sqlInsert.rows[0]) : null
-                };
-                res.set({
-                    'Content-Type': 'application/json'
-                });
-                res.json({requestBody : result});
-                client.release();
+            const result = {
+                'response': (sqlInsert) ? (sqlInsert.rows[0]) : null
+            };
+            res.set({
+                'Content-Type': 'application/json'
+            });
+            res.json({ requestBody: result });
+            client.release();
         }
         catch (err) {
             console.error(err);
@@ -95,5 +95,4 @@ RETURNING id as new_id;`);
 
     })
 
-
-    .listen(PORT, () => console.log(`Listening on ${ PORT }`));
+    .listen(PORT, () => console.log(`Listening on ${PORT}`));
